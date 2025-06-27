@@ -1,0 +1,2 @@
+all:
+	g++ -Iinclude -Iinclude/SDL3 -Iinclude/headers -Llib -o taj src/*.cpp -lmingw32 -lSDL3 -lSDL3_image
