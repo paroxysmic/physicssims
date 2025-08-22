@@ -6,7 +6,7 @@ py.init()
 win = py.display.set_mode((800, 800))
 running, playing = True, True
 OWHITE = 0xDDDDDD
-HEIGHT, WIDTH = 10, 10
+HEIGHT, WIDTH = 20, 20
 PIXH, PIXW = 800 / HEIGHT, 800 / WIDTH
 AREA = HEIGHT * WIDTH
 epoch = 0
@@ -26,8 +26,9 @@ def drawGrid():
         py.draw.line(win, 0x222222, (0, y * PIXH), (800, y * PIXH))
     for x in range(WIDTH + 1):
         py.draw.line(win, 0x222222, (x * PIXW, 0), (x * PIXW, 800))  
-vertvecs = [20 for i in range(AREA - WIDTH)]
-horizvecs = [20 for i in range(AREA - HEIGHT)]
+vertvecs = [0 for i in range(AREA - WIDTH)]
+horizvecs = [0 for i in range(AREA - HEIGHT)]
+ihat, jhat = vec2(1, 0), vec2(0, 1)
 def getDiv(x, y):
     ind = x + y * WIDTH
     d = 0
@@ -61,23 +62,41 @@ def vertiVecPos(x, y):
     return (x + 0.5) * PIXW, (y + 1) * PIXH
 def genVelocity(x, y):
     #ci - closest interstion, cc - closest centre
-    cix = (x + PIXW / 2) // PIXW
-    ciy = (y + PIXH / 2) // PIXH
-    ccx = x // PIXW
-    ccy = y // PIXH
+    cix = int((x + PIXW / 2) // PIXW)
+    ciy = int((y + PIXH / 2) // PIXH)
+    ccx = int(x // PIXW)
+    ccy = int(y // PIXH)
     #lvv - legal vert vecs, lhv - legal horiz vecs
     lvv = [cix != 0 and ccy != 0, cix != WIDTH and ccy != 0, cix != 0 and ccy != HEIGHT - 1, cix != WIDTH and ccy != HEIGHT - 1]
     lhv = [ccx != 0 and ciy != 0, ccx != WIDTH - 1 and ciy != 0, ccx != 0 and ciy != HEIGHT, ccx != WIDTH - 1 and ciy != HEIGHT]
-    #cvv - core vertical vec, chv - core horizontal vec
+    #cvv - core verti vec, chv - core horiz vec
     cvv = (ccx, ciy - 1)
     chv = (cix - 1, ccy)
-    #wshv - weighted sum of horizontal vecs, wsvv - weighted sum of vertical vecs
-    wshv = vec2(0, 0)
-    wsvv = vec2(0, 0)
+    #wshv - weighted sum of horiz vecs, wsvv - weighted sum of verti vecs
+    #NOTE: both of these are scalars!!!
+    wshv = 0
+    wsvv = 0
+    #ulvv - upper left verti vec, ulhv - upper left horiz vec
+    ulhv = (ccx * PIXW, (ciy - 0.5) * PIXH)
+    ulvv = ((cix - 0.5) * PIXW, ccy * PIXH)
+    #hsfs - horiz scalar factors, vsfs - verti scalar factors (for the weighting)
+    hsfs = [(x - ulhv[0]) * (y - ulhv[1]), (PIXW + ulhv[0] - x) * (y - ulhv[1]),
+            (x - ulhv[0]) * (PIXH + ulhv[1] - y), (PIXW + ulhv[0] - x) * (PIXH + ulhv[1] - y)]
+    vsfs = [(x - ulvv[0]) * (y - ulvv[1]), (PIXW + ulvv[0] - x) * (y - ulvv[1]),
+            (x - ulvv[0]) * (PIXH + ulvv[1] - y), (PIXW + ulvv[0] - x) * (PIXH + ulvv[1] - y)]
+    hsfs = [num / (PIXW * PIXH) for num in hsfs]
+    vsfs = [num / (PIXW * PIXH) for num in vsfs]
     if(lvv[0]):
-        scal = (abs(x - ccx) * abs(y - ccy) / (PIXW * PIXH))
-        wsvv += scal * (vertvecs[chv[0] + WIDTH * (chv[1])])
-    
+        wsvv += (vsfs[0] * vertvecs[chv[0] + (chv[1] - 1) * WIDTH])
+    if(lvv[1]):
+        wsvv += (vsfs[1] * vertvecs[(chv[0] + 1) + ((chv[1] - 1) * WIDTH)])
+    if(lvv[2]):
+        wsvv += (vsfs[2] * vertvecs[chv[0] + chv[1] * WIDTH])
+    if(lvv[3]):
+        wsvv += (vsfs[3] * vertvecs[(chv[0] + 1) + chv[1] * WIDTH])
+    arrow(vec2(x, y), vec2(x, y + wsvv), 0xff0000)
+    return (wshv, wsvv)
+ballx, bally = 400, 400
 while running:
     clock.tick(60)
     epoch += 0.01
@@ -91,13 +110,15 @@ while running:
         running = False
     if keys[py.K_i]:
         for i in range(len(horizvecs)):
-            horizvecs[i] = random.random() * 200 - 100
-            vertvecs[i] = random.random() * 200 - 100
+            horizvecs[i] = random.random() * 60 - 30
+        for i in range(len(vertvecs)):
+            vertvecs[i] = random.random() * 60 - 30
         horsum = sum(horizvecs)
         versum = sum(vertvecs)
         avgsum = horsum + versum
         for i in range(len(horizvecs)):
             horizvecs[i] -= avgsum / len(horizvecs)
+        for i in range(len(vertvecs)):
             vertvecs[i] -= avgsum / len(horizvecs)
     balanceInflow(1)
     win.fill(OWHITE)
@@ -117,5 +138,8 @@ while running:
             pos = vec2((x + 1) * PIXW, (y + 0.5) * PIXH)
             spos = vec2((x + 1) * PIXW + horizvecs[x + y * (WIDTH - 1)], (y + 0.5) * PIXH)
             arrow(pos, spos, 0x00ff00)
-    genVelocity(mpos[0], mpos[1])
+    ballvel = genVelocity(ballx, bally)
+    ballx += ballvel[0]
+    bally += ballvel[1]
+    py.draw.circle(win, 0x000000, (ballx, bally), 10)
     py.display.update()
