@@ -94,9 +94,17 @@ def genVelocity(x, y):
         wsvv += (vsfs[2] * vertvecs[chv[0] + chv[1] * WIDTH])
     if(lvv[3]):
         wsvv += (vsfs[3] * vertvecs[(chv[0] + 1) + chv[1] * WIDTH])
-    arrow(vec2(x, y), vec2(x, y + wsvv), 0xff0000)
+    if(lhv[0]):
+        wshv += (hsfs[0] * horizvecs[(cvv[0] - 1) + (cvv[1] * (WIDTH - 1))])
+    if(lhv[1]):
+        wshv += (hsfs[1] * horizvecs[cvv[0] + (cvv[1] * (WIDTH - 1))])
+    if(lhv[2]):
+        wshv += (hsfs[2] * horizvecs[(cvv[0] - 1) + ((cvv[1] + 1) * (WIDTH - 1))])
+    if(lhv[3]):
+        wshv += (hsfs[3] * horizvecs[cvv[0] + ((cvv[1] + 1) * (WIDTH - 1))])        
+    arrow(vec2(x, y), vec2(x + wshv, y + wsvv), 0xff0000)
     return (wshv, wsvv)
-ballx, bally = 400, 400
+bposs = [[(i + 0.5) * PIXW, (j + 0.5) * PIXH] for i in range(WIDTH) for j in range(HEIGHT)]
 while running:
     clock.tick(60)
     epoch += 0.01
@@ -106,6 +114,8 @@ while running:
     for event in events:
         if event.type == py.QUIT:
             running = False
+        if event.type == py.MOUSEBUTTONDOWN:
+            bposs.append([mpos[0], mpos[1]])
     if keys[py.K_q]:
         running = False
     if keys[py.K_i]:
@@ -138,8 +148,10 @@ while running:
             pos = vec2((x + 1) * PIXW, (y + 0.5) * PIXH)
             spos = vec2((x + 1) * PIXW + horizvecs[x + y * (WIDTH - 1)], (y + 0.5) * PIXH)
             arrow(pos, spos, 0x00ff00)
-    ballvel = genVelocity(ballx, bally)
-    ballx += ballvel[0]
-    bally += ballvel[1]
-    py.draw.circle(win, 0x000000, (ballx, bally), 10)
+    bposs = [pos for pos in bposs if (pos[0] > 0 and pos[0] < 800 and pos[1] > 0 and pos[1] < 800)]
+    for pos in bposs:
+        vel = genVelocity(pos[0], pos[1])
+        pos[0] += vel[0]
+        pos[1] += vel[1]
+        py.draw.circle(win, 0x000000, (pos[0], pos[1]), 5)
     py.display.update()
