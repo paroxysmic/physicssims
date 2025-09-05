@@ -1,7 +1,9 @@
 #define HEIGHT 20
 #define WIDTH 40
 #define AREA (HEIGHT * WIDTH)
-#define ind(x, y) ((x) + (WIDTH * y))
+#define ind(x, y) ((x) + (WIDTH * (y)))
+#define vertind(x, y) ((x) + ((WIDTH - 1) * y))
+#define horiind(x, y) ((x) + (WIDTH * (y)))
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -27,6 +29,13 @@ void debugdisp(int* arr) {
             printf("%d   ", arr[x + y * WIDTH]);
         }
         printf("\n");
+    }
+}
+void minimizeDiv(double* vertvecs, double* horizvecs) {
+    for(int y=0;y<HEIGHT;y++) {
+        for(int x=0;x<WIDTH;x++) {
+
+        }
     }
 }
 int main(int argc, char **argv) {

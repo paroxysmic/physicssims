@@ -62,7 +62,7 @@ def vertiVecPos(x, y):
     return (x + 0.5) * PIXW, (y + 1) * PIXH
 def genVelocity(x, y):
     #ci - closest interstion, cc - closest centre
-    cix = int((x + PIXW / 2) // PIXW)
+    cix = int((x + PIXW / 2) // PIXW) 
     ciy = int((y + PIXH / 2) // PIXH)
     ccx = int(x // PIXW)
     ccy = int(y // PIXH)
@@ -102,9 +102,8 @@ def genVelocity(x, y):
         wshv += (hsfs[2] * horizvecs[(cvv[0] - 1) + ((cvv[1] + 1) * (WIDTH - 1))])
     if(lhv[3]):
         wshv += (hsfs[3] * horizvecs[cvv[0] + ((cvv[1] + 1) * (WIDTH - 1))])        
-    arrow(vec2(x, y), vec2(x + wshv, y + wsvv), 0xff0000)
     return (wshv, wsvv)
-bposs = [[(i + 0.5) * PIXW, (j + 0.5) * PIXH] for i in range(WIDTH) for j in range(HEIGHT)]
+bposs = [[(i / 3) * PIXW, (j / 3) * PIXH] for i in range(WIDTH * 3) for j in range(HEIGHT * 3)]
 while running:
     clock.tick(60)
     epoch += 0.01
@@ -151,7 +150,7 @@ while running:
     bposs = [pos for pos in bposs if (pos[0] > 0 and pos[0] < 800 and pos[1] > 0 and pos[1] < 800)]
     for pos in bposs:
         vel = genVelocity(pos[0], pos[1])
-        pos[0] += vel[0]
-        pos[1] += vel[1]
+        pos[0] += vel[0] * 0.4
+        pos[1] += vel[1] * 0.4
         py.draw.circle(win, 0x000000, (pos[0], pos[1]), 5)
     py.display.update()
